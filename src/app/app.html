@@ -1,0 +1,105 @@
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Parkly inicio">
+      <span class="brand-mark" aria-hidden="true">P</span>
+      <span>parkly</span>
+    </a>
+    <div class="topbar-user">
+      <span class="avatar" aria-hidden="true">MS</span>
+      <span class="user-name">Marina Santos</span>
+      <button class="icon-button" type="button" aria-label="Abrir menu da conta">
+        <span aria-hidden="true">&#8964;</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <aside class="sidebar" aria-label="Navegacao principal">
+      <nav>
+        <a class="nav-item" href="/"><span class="nav-icon" aria-hidden="true">&#9638;</span><span>Inicio</span></a>
+        <a class="nav-item active" href="/"><span class="nav-icon" aria-hidden="true">&#9635;</span><span>Nova reserva</span></a>
+        <a class="nav-item" href="/"><span class="nav-icon" aria-hidden="true">&#9776;</span><span>Minhas reservas</span></a>
+      </nav>
+      <div class="sidebar-footer"><a class="nav-item" href="/"><span class="nav-icon" aria-hidden="true">?</span><span>Ajuda</span></a></div>
+    </aside>
+
+    <main class="content">
+      <div class="content-header">
+        <div>
+          <p class="eyebrow">Reservas</p>
+          <h1>Reserve sua vaga</h1>
+          <p class="subtitle">Escolha quando e onde voce vai estacionar.</p>
+        </div>
+        <span class="status-pill"><span class="status-dot"></span> Sistema online</span>
+      </div>
+
+      <div class="stepper" aria-label="Etapas da reserva">
+        <div class="step" [class.current]="currentStep() === 1" [class.complete]="currentStep() === 2"><span class="step-number">1</span><span class="step-label">Detalhes</span></div>
+        <span class="step-line" [class.complete]="currentStep() === 2"></span>
+        <div class="step" [class.current]="currentStep() === 2"><span class="step-number">2</span><span class="step-label">Confirmacao</span></div>
+      </div>
+
+      @if (submitState() === 'success') {
+        <section class="success-panel" aria-live="polite">
+          <div class="success-icon" aria-hidden="true">&#10003;</div>
+          <p class="eyebrow">Reserva confirmada</p>
+          <h2>Sua vaga esta garantida.</h2>
+          <p class="success-copy">A reserva foi criada com sucesso. Voce podera consultar os detalhes em Minhas reservas.</p>
+          @if (reservationId()) { <p class="reservation-code">Reserva #{{ reservationId() }}</p> }
+          <button class="button primary" type="button" (click)="startAnotherReservation()">Fazer nova reserva</button>
+        </section>
+      } @else if (currentStep() === 1) {
+        <section class="booking-layout">
+          <form class="form-panel" (ngSubmit)="continueToReview()" #reservationForm="ngForm">
+            <div class="panel-heading">
+              <div><h2>Detalhes da reserva</h2><p>Informe o periodo em que a vaga sera utilizada.</p></div>
+              <span class="required-note">* Obrigatorio</span>
+            </div>
+
+            <div class="field-group">
+              <label for="vaga">Vaga <span>*</span></label>
+              <div class="input-with-suffix"><input id="vaga" name="vagaId" type="number" min="1" placeholder="Ex.: 24" [(ngModel)]="form.vagaId" required /><span class="input-suffix">ID</span></div>
+              <small>Digite o numero da vaga que deseja reservar.</small>
+            </div>
+
+            <div class="field-grid">
+              <div class="field-group"><label for="inicio">Entrada <span>*</span></label><input id="inicio" name="dataInicio" type="datetime-local" [(ngModel)]="form.dataInicio" required /></div>
+              <div class="field-group"><label for="fim">Saida <span>*</span></label><input id="fim" name="dataFim" type="datetime-local" [(ngModel)]="form.dataFim" required /></div>
+            </div>
+
+            <div class="field-group">
+              <label for="preco">Valor da reserva <span>*</span></label>
+              <div class="input-with-prefix"><span class="input-prefix">R$</span><input id="preco" name="precoReserva" type="number" min="0" step="0.01" placeholder="0,00" [(ngModel)]="form.precoReserva" required /></div>
+              <small>Valor informado pela administracao da vaga.</small>
+            </div>
+
+            <div class="form-footer"><span class="secure-note"><span aria-hidden="true">&#9671;</span> Seus dados estao seguros</span><button class="button primary" type="submit" [disabled]="!reservationForm.valid || !isFormValid">Continuar <span aria-hidden="true">&#8594;</span></button></div>
+          </form>
+
+          <aside class="summary-panel">
+            <div class="summary-heading"><span class="summary-icon" aria-hidden="true">&#9635;</span><div><h2>Resumo</h2><p>Confira antes de continuar</p></div></div>
+            <div class="summary-list">
+              <div class="summary-row"><span>Vaga</span><strong>{{ form.vagaId || '--' }}</strong></div>
+              <div class="summary-row"><span>Entrada</span><strong>{{ form.dataInicio ? (form.dataInicio | date:'dd/MM/yyyy, HH:mm') : '--' }}</strong></div>
+              <div class="summary-row"><span>Saida</span><strong>{{ form.dataFim ? (form.dataFim | date:'dd/MM/yyyy, HH:mm') : '--' }}</strong></div>
+              <div class="summary-row"><span>Duracao</span><strong>{{ durationLabel }}</strong></div>
+            </div>
+            <div class="summary-total"><span>Total</span><strong>R$ {{ form.precoReserva !== null ? (form.precoReserva | number:'1.2-2') : '0,00' }}</strong></div>
+          </aside>
+        </section>
+      } @else {
+        <section class="review-panel">
+          <div class="panel-heading"><div><h2>Revise sua reserva</h2><p>Confira os dados antes de confirmar.</p></div><button class="text-button" type="button" (click)="editReservation()">Editar dados</button></div>
+          <div class="review-grid">
+            <div class="review-item"><span>Vaga</span><strong>Vaga {{ form.vagaId }}</strong></div>
+            <div class="review-item"><span>Periodo</span><strong>{{ form.dataInicio | date:'dd/MM/yyyy, HH:mm' }} ate {{ form.dataFim | date:'dd/MM/yyyy, HH:mm' }}</strong></div>
+            <div class="review-item"><span>Duracao</span><strong>{{ durationLabel }}</strong></div>
+            <div class="review-item"><span>Valor total</span><strong>R$ {{ form.precoReserva | number:'1.2-2' }}</strong></div>
+          </div>
+          @if (submitState() === 'error') { <div class="error-message" role="alert"><span aria-hidden="true">!</span>{{ errorMessage() }}</div> }
+          <div class="review-footer"><button class="button secondary" type="button" (click)="editReservation()">Voltar</button><button class="button primary" type="button" [disabled]="isSubmitting()" (click)="submitReservation()">@if (isSubmitting()) { Confirmando... } @else { Confirmar reserva <span aria-hidden="true">&#10003;</span> }</button></div>
+        </section>
+      }
+    </main>
+  </div>
+</div>
